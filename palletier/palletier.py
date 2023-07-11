@@ -19,7 +19,8 @@ Dims = collections.namedtuple('Dims', ['dim1', 'dim2', 'dim3'])
 
 class Solver:
     """The volume optimization solver"""
-    def __init__(self, pallets, boxes):
+
+    def __init__(self, pallets, boxes, allow_rotation):
         """Initializes the solver with the pallets available and the boxes
         to be packed.
 
@@ -46,13 +47,15 @@ class Solver:
         self.total_num_boxes = len(self.boxes)
         self.total_boxes_vol = sum(box.vol for box in self.boxes)
         self.packed_pallets = []
+        self.allow_rotation = allow_rotation
 
     def pack(self):
         remaining_boxes = self.boxes
         while len(remaining_boxes) != 0:  # All boxes need to be packed
             single_solutions = []  # A solution for each pallet type
             for pallet in self.pallets:
-                packer = Packer(remaining_boxes, pallet)
+                packer = Packer(remaining_boxes, pallet,
+                                allow_rotation=self.allow_rotation)
                 pallet_ori, packed, unpacked, util = packer.iterations()
                 single_solutions.append((pallet_ori, packed, unpacked, util))
                 pallet.weight = 0  # Reset weight for next iteration
@@ -65,7 +68,7 @@ class Solver:
                 for box in best_unpacked:
                     box.orientation = box.dims
                     self.packed_pallets.append(PackedPallet(
-                        Pallet(dims=box.dims, name='BOX', ptype=0,
+                        Pallet(dims=box.dims, name='BOX',
                                orientation=box.dims),
                         [box],
                     ))
@@ -79,12 +82,12 @@ class Solver:
         for packed in self.packed_pallets:
             dims = packed.pallet.orientation
             print('Packed Pallet #{0} with utilization of {1}'.format(
-                    packed.idx, packed.utilization))
+                packed.idx, packed.utilization))
             print('Using Pallet #{0} with dims ({1}, {2}, {3})'.format(
-                    packed.pallet.idx, (*dims)))
+                packed.pallet.idx, (*dims)))
             print('With {0} boxes:'.format(packed.num_boxes))
             for box in packed.boxes:
                 print('Box #{0} with dims ({1}, {2}, {3})'.format(box.idx,
-                                                            (*box.orientation)),
+                                                                  (*box.orientation)),
                       end=' ')
                 print('located at ({0}, {1}, {2})'.format((*box.pos)))
