@@ -49,8 +49,10 @@ class Packer:
                 ::2] if allow_rotation else [box.dims]
             # We only want (dim1, dim2, dim3), (dim2, dim1, dim3) and (dim3, dim1, dim2)
             for orientation in orientations:
+                print(orientation)
+                print(pallet_orientation)
                 ex_dim, dim2, dim3 = orientation
-                if (ex_dim > pallet_orientation[1] or
+                if allow_rotation and (ex_dim > pallet_orientation[1] or
                         ((dim2 > pallet_orientation[0] or
                             dim3 > pallet_orientation[2]) and
                             (dim2 > pallet_orientation[2] or
