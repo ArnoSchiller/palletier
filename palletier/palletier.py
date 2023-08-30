@@ -56,12 +56,12 @@ class Solver:
             for pallet in self.pallets:
                 packer = Packer(remaining_boxes, pallet,
                                 allow_rotation=self.allow_rotation)
-                pallet_ori, packed, unpacked, util = packer.iterations()
-                single_solutions.append((pallet_ori, packed, unpacked, util))
+                pallet_ori, packed, unpacked, score = packer.iterations()
+                single_solutions.append((pallet_ori, packed, unpacked, score))
                 pallet.weight = 0  # Reset weight for next iteration
-            # Get the best solution by utilization percentage
+            # Get the best solution by score
             solution = max(single_solutions, key=lambda x: x[3])
-            best_pallet, best_packed, best_unpacked, vol_util = solution
+            best_pallet, best_packed, best_unpacked, score = solution
             # Make this a test
             # The boxes we sent to pack do not fit into any pallets
             if len(best_unpacked) == len(remaining_boxes):
@@ -81,13 +81,12 @@ class Solver:
     def print_solution(self):
         for packed in self.packed_pallets:
             dims = packed.pallet.orientation
-            print('Packed Pallet #{0} with utilization of {1}'.format(
-                packed.idx, packed.utilization))
-            print('Using Pallet #{0} with dims ({1}, {2}, {3})'.format(
-                packed.pallet.idx, dims))
-            print('With {0} boxes:'.format(packed.num_boxes))
+            print(
+                f"Packed Pallet #{packed.idx} with utilization of {packed.utilization}")
+            print(f"Using Pallet #{packed.pallet.idx} with dims {dims}")
+            """
+            print(f"With {packed.num_boxes} boxes:")
             for box in packed.boxes:
-                print('Box #{0} with dims ({1}, {2}, {3})'.format(box.idx,
-                                                                  box.orientation),
-                      end=' ')
-                print('located at ({0}, {1}, {2})'.format(box.pos))
+                print(f"Box #{box.idx} with dims {box.orientation}")
+                print(f"  located at {box.pos}")
+            """
