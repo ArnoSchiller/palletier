@@ -84,10 +84,10 @@ class Solver:
             print('Packed Pallet #{0} with utilization of {1}'.format(
                 packed.idx, packed.utilization))
             print('Using Pallet #{0} with dims ({1}, {2}, {3})'.format(
-                packed.pallet.idx, (*dims)))
+                packed.pallet.idx, dims))
             print('With {0} boxes:'.format(packed.num_boxes))
             for box in packed.boxes:
                 print('Box #{0} with dims ({1}, {2}, {3})'.format(box.idx,
-                                                                  (*box.orientation)),
+                                                                  box.orientation),
                       end=' ')
-                print('located at ({0}, {1}, {2})'.format((*box.pos)))
+                print('located at ({0}, {1}, {2})'.format(box.pos))
