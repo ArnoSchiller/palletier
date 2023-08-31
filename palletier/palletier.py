@@ -20,7 +20,7 @@ Dims = collections.namedtuple('Dims', ['dim1', 'dim2', 'dim3'])
 class Solver:
     """The volume optimization solver"""
 
-    def __init__(self, pallets, boxes, allow_rotation):
+    def __init__(self, pallets, boxes):
         """Initializes the solver with the pallets available and the boxes
         to be packed.
 
@@ -47,28 +47,26 @@ class Solver:
         self.total_num_boxes = len(self.boxes)
         self.total_boxes_vol = sum(box.vol for box in self.boxes)
         self.packed_pallets = []
-        self.allow_rotation = allow_rotation
 
     def pack(self):
         remaining_boxes = self.boxes
         while len(remaining_boxes) != 0:  # All boxes need to be packed
             single_solutions = []  # A solution for each pallet type
             for pallet in self.pallets:
-                packer = Packer(remaining_boxes, pallet,
-                                allow_rotation=self.allow_rotation)
-                pallet_ori, packed, unpacked, score = packer.iterations()
-                single_solutions.append((pallet_ori, packed, unpacked, score))
+                packer = Packer(remaining_boxes, pallet)
+                pallet_ori, packed, unpacked, util = packer.iterations()
+                single_solutions.append((pallet_ori, packed, unpacked, util))
                 pallet.weight = 0  # Reset weight for next iteration
-            # Get the best solution by score
+            # Get the best solution by utilization percentage
             solution = max(single_solutions, key=lambda x: x[3])
-            best_pallet, best_packed, best_unpacked, score = solution
+            best_pallet, best_packed, best_unpacked, vol_util = solution
             # Make this a test
             # The boxes we sent to pack do not fit into any pallets
             if len(best_unpacked) == len(remaining_boxes):
                 for box in best_unpacked:
                     box.orientation = box.dims
                     self.packed_pallets.append(PackedPallet(
-                        Pallet(dims=box.dims, name='BOX',
+                        Pallet(dims=box.dims, name='BOX', ptype=0,
                                orientation=box.dims),
                         [box],
                     ))
@@ -84,9 +82,8 @@ class Solver:
             print(
                 f"Packed Pallet #{packed.idx} with utilization of {packed.utilization}")
             print(f"Using Pallet #{packed.pallet.idx} with dims {dims}")
-            """
+
             print(f"With {packed.num_boxes} boxes:")
             for box in packed.boxes:
                 print(f"Box #{box.idx} with dims {box.orientation}")
                 print(f"  located at {box.pos}")
-            """

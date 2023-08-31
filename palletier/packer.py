@@ -10,7 +10,7 @@ Dims = collections.namedtuple('Dims', ['dim1', 'dim2', 'dim3'])
 
 
 class Packer:
-    def __init__(self, boxes, pallet, allow_rotation):
+    def __init__(self, boxes, pallet):
         self.boxes = boxes
         self.pallet = pallet
         self.total_boxes = len(boxes)
@@ -32,8 +32,6 @@ class Packer:
         self.lilz = 0
         self.used_coords = []
 
-        self.allow_rotation = allow_rotation
-
     def reset_boxes(self):
         for box in self.boxes:
             box.is_packed = False
@@ -42,39 +40,25 @@ class Packer:
         self.packed_vol = 0
 
     @staticmethod
-    def get_candidate_layers(boxes, pallet_orientation, allow_rotation):
+    def get_candidate_layers(boxes, pallet_orientation):
         candidate_layers = []
         for box in boxes:
-            orientations = list(permutations(box.dims))[
-                ::2] if allow_rotation else [box.dims]
             # We only want (dim1, dim2, dim3), (dim2, dim1, dim3) and (dim3, dim1, dim2)
-            for orientation in orientations:
-                w, l, h = orientation
-
-                # item too high
-                if h > pallet_orientation[1]:
+            for orientation in list(permutations(box.dims))[::2]:
+                ex_dim, dim2, dim3 = orientation
+                if (ex_dim > pallet_orientation[1] or
+                        ((dim2 > pallet_orientation[0] or
+                          dim3 > pallet_orientation[2]) and
+                         (dim2 > pallet_orientation[2] or
+                          dim3 > pallet_orientation[0]))):
                     continue
-                # item length or width too large for pallet
-                if allow_rotation:
-                    if ((w > pallet_orientation[0] or l > pallet_orientation[2])
-                            and (w > pallet_orientation[2] or l > pallet_orientation[0])):
-                        continue
-                else:
-                    if w > pallet_orientation[0] or h > pallet_orientation[2]:
-                        continue
-                if w in [layer.width for layer in candidate_layers]:
+                if ex_dim in [layer.width for layer in candidate_layers]:
                     continue
-                if allow_rotation:
-                    layer_value = sum(min(abs(w - dim)
+                layer_value = sum(min(abs(ex_dim - dim)
                                       for dim in box2.dims)
-                                      for box2 in boxes if box2 is not box)
-                else:
-                    layer_value = sum(abs(w - box2.dims.dim1)
-                                      for box2 in boxes if box2 is not box)
-
-                layer = Layer(width=w, value=layer_value)
+                                  for box2 in boxes if box2 is not box)
+                layer = Layer(width=ex_dim, value=layer_value)
                 candidate_layers.append(layer)
-
         return candidate_layers
 
     def get_box(self, max_len_x, gap_len_y, max_len_y, gap_len_z, max_len_z):
@@ -100,10 +84,7 @@ class Packer:
                 continue
             else:
                 checked.append(box.dims)
-
-            orientations = set(permutations(box.dims)
-                               if self.allow_rotation else [box.dims])
-            for orientation in orientations:
+            for orientation in set(permutations(box.dims)):
                 dim1, dim2, dim3 = orientation
                 if dim1 <= max_len_x and dim2 <= max_len_y and dim3 <= max_len_z:
                     if dim2 <= gap_len_y:
@@ -164,16 +145,14 @@ class Packer:
                     edge.even()
                 return None, None, None
 
-    def get_layer(self, pallet_orientation, remaining_y, allow_rotation):
+    def get_layer(self, pallet_orientation, remaining_y):
         eval_value = 99999999
         layer_thickness = 0
         pallet_x, pallet_y, pallet_z = pallet_orientation
         for box in self.boxes:
             if box.is_packed:
                 continue
-            orientations = list(permutations(box.dims))[
-                ::2] if allow_rotation else [box.dims]
-            for orientation in orientations:
+            for orientation in list(permutations(box.dims))[::2]:
                 ex_dim, dim2, dim3 = orientation
                 if (ex_dim <= remaining_y and
                         (dim2 <= pallet_x and dim3 <= pallet_z) or
@@ -311,12 +290,11 @@ class Packer:
                 self.pack_box(box, coords, orientation)
 
     def iterations(self):
-
-        unique_permutations = set(permutations(
-            self.pallet_dims) if self.allow_rotation else [tuple(self.pallet_dims)])
+        unique_permutations = set(perm
+                                  for perm in permutations(self.pallet_dims))
         for variant, pallet_orientation in enumerate(unique_permutations):
             candidate_layers = self.get_candidate_layers(self.boxes,
-                                                         pallet_orientation, self.allow_rotation)
+                                                         pallet_orientation)
             layers = sorted(candidate_layers, key=lambda x: x.value)
             for iteration, layer in enumerate(layers):
                 self.reset_boxes()
@@ -350,7 +328,7 @@ class Packer:
                         remaining_z = pallet_orientation[2]
 
                     self.layer_thickness = self.get_layer(pallet_orientation,
-                                                          remaining_y, self.allow_rotation)
+                                                          remaining_y)
                 if self.packed_vol >= self.best_vol:
                     self.best_vol = self.packed_vol
                     self.best_pallet.orientation = Dims(*pallet_orientation)
