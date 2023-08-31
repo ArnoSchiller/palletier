@@ -49,21 +49,30 @@ class Packer:
                 ::2] if allow_rotation else [box.dims]
             # We only want (dim1, dim2, dim3), (dim2, dim1, dim3) and (dim3, dim1, dim2)
             for orientation in orientations:
-                print(orientation)
-                print(pallet_orientation)
-                ex_dim, dim2, dim3 = orientation
-                if allow_rotation and (ex_dim > pallet_orientation[1] or
-                        ((dim2 > pallet_orientation[0] or
-                            dim3 > pallet_orientation[2]) and
-                            (dim2 > pallet_orientation[2] or
-                             dim3 > pallet_orientation[0]))):
+                w, l, h = orientation
+
+                # item too high
+                if h > pallet_orientation[1]:
                     continue
-                if ex_dim in [layer.width for layer in candidate_layers]:
+                # item length or width too large for pallet
+                if allow_rotation:
+                    if ((w > pallet_orientation[0] or l > pallet_orientation[2])
+                            and (w > pallet_orientation[2] or l > pallet_orientation[0])):
+                        continue
+                else:
+                    if w > pallet_orientation[0] or h > pallet_orientation[2]:
+                        continue
+                if w in [layer.width for layer in candidate_layers]:
                     continue
-                layer_value = sum(min(abs(ex_dim - dim)
+                if allow_rotation:
+                    layer_value = sum(min(abs(w - dim)
                                       for dim in box2.dims)
-                                  for box2 in boxes if box2 is not box)
-                layer = Layer(width=ex_dim, value=layer_value)
+                                      for box2 in boxes if box2 is not box)
+                else:
+                    layer_value = sum(abs(w - box2.dims.dim1)
+                                      for box2 in boxes if box2 is not box)
+
+                layer = Layer(width=w, value=layer_value)
                 candidate_layers.append(layer)
 
         return candidate_layers
