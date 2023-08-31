@@ -30,7 +30,8 @@ class PalletierPacker():
         for _ in range(9):  # 9
             boxes.append(palletier.Box(dims=(6, 1, 6)))
 
-        packer = palletier.Solver(pallets=pallets, boxes=boxes)
+        packer = palletier.Solver(
+            pallets=pallets, boxes=boxes, allow_rotation=False)
         packer.pack()
 
         print(len(packer.packed_pallets))

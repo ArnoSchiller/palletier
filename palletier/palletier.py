@@ -20,7 +20,7 @@ Dims = collections.namedtuple('Dims', ['dim1', 'dim2', 'dim3'])
 class Solver:
     """The volume optimization solver"""
 
-    def __init__(self, pallets, boxes):
+    def __init__(self, pallets, boxes, allow_rotation):
         """Initializes the solver with the pallets available and the boxes
         to be packed.
 
@@ -32,6 +32,7 @@ class Solver:
             TypeError: If an element in pallets is not a Pallet
             TypeError: If an element in boxes is not a Box
         """
+        self.allow_rotation = allow_rotation
 
         if all(isinstance(pallet, Pallet) for pallet in pallets):
             self.pallets = pallets
@@ -53,7 +54,7 @@ class Solver:
         while len(remaining_boxes) != 0:  # All boxes need to be packed
             single_solutions = []  # A solution for each pallet type
             for pallet in self.pallets:
-                packer = Packer(remaining_boxes, pallet)
+                packer = Packer(remaining_boxes, pallet, self.allow_rotation)
                 pallet_ori, packed, unpacked, util = packer.iterations()
                 single_solutions.append((pallet_ori, packed, unpacked, util))
                 pallet.weight = 0  # Reset weight for next iteration

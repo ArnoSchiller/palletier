@@ -10,7 +10,7 @@ Dims = collections.namedtuple('Dims', ['dim1', 'dim2', 'dim3'])
 
 
 class Packer:
-    def __init__(self, boxes, pallet):
+    def __init__(self, boxes, pallet, allow_rotation):
         self.boxes = boxes
         self.pallet = pallet
         self.total_boxes = len(boxes)
@@ -31,6 +31,7 @@ class Packer:
         self.layer_thickness = 0
         self.lilz = 0
         self.used_coords = []
+        self.allow_rotation = allow_rotation
 
     def reset_boxes(self):
         for box in self.boxes:
