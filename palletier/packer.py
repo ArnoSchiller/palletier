@@ -292,7 +292,9 @@ class Packer:
 
     def iterations(self):
         unique_permutations = set(perm
-                                  for perm in permutations(self.pallet_dims))
+                                  for perm in permutations(self.pallet_dims)
+                                  ) if self.allow_rotation else [self.pallet_dims]
+
         for variant, pallet_orientation in enumerate(unique_permutations):
             candidate_layers = self.get_candidate_layers(self.boxes,
                                                          pallet_orientation)
