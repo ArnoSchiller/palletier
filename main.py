@@ -1,6 +1,7 @@
 
 # ..\PackingUtils\env\Scripts\activate
-
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 try:
     import palletier
     PACKER_AVAILABLE = True
@@ -17,26 +18,48 @@ class PalletierPacker():
         return {}
 
     def pack_variant(self):
-        if not self.is_packer_available():
-            raise ImportError(
-                "PalletierPacker requires palletier to be installed (pip install -r requirements_palletier.txt)")
-
-        pallets = [palletier.Pallet(
-            dims=(10, 4, 3),
-            max_weight=0
-        )]
+        pallets = [
+            palletier.Pallet(dims=(800, 1, 500), max_weight=0),
+            palletier.Pallet(dims=(800, 1, 500), max_weight=0)
+        ]
 
         boxes = []
-        for idx in range(3):
-            boxes.append(palletier.Box(dims=(2, 2, 2)))
+        # "AMELAND WPC Steckzaun Füllung"
+        for _ in range(5):  # 9
+            boxes.append(palletier.Box(dims=(274, 1, 153)))
+        # "Aluminium Steckzaunpfosten, silber"
+        for _ in range(9):  # 9
+            boxes.append(palletier.Box(dims=(68, 1, 68)))
 
         packer = palletier.Solver(
             pallets=pallets, boxes=boxes, allow_rotation=False)
         packer.pack()
 
-        for p in packer.packed_pallets:
-            for box in p.boxes:
-                print(box, box.pos, box.orientation)
+        print(len(packer.packed_pallets))
+        visualize(packer)
+        # packer.print_solution()
+
+
+def visualize(packer):
+    for packed in packer.packed_pallets:
+        fig, ax = plt.subplots()
+        pal_dims = packed.pallet.orientation
+
+        ax.axes.set_xlim(0, pal_dims[0])
+        ax.axes.set_ylim(0, pal_dims[2])
+        ax.set_xlabel("Width")
+        ax.set_ylabel("Height")
+        ax.set_aspect('equal')
+
+        for box in packed.boxes:
+
+            dim = box.orientation
+            ax.add_patch(
+                Rectangle((box.pos[0], box.pos[2]), dim[0], dim[2],
+                          facecolor="r", edgecolor="black", linewidth=2)
+            )
+
+        plt.show()
 
     def _get_rotation_type(self, box):
         if box.orientation == box.dims:
