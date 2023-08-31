@@ -19,16 +19,17 @@ class PalletierPacker():
 
     def pack_variant(self):
         pallets = [
-            palletier.Pallet(dims=(80, 1, 50), max_weight=0)
+            palletier.Pallet(dims=(800, 1, 500), max_weight=0),
+            palletier.Pallet(dims=(800, 1, 500), max_weight=0)
         ]
 
         boxes = []
         # "AMELAND WPC Steckzaun Füllung"
         for _ in range(5):  # 9
-            boxes.append(palletier.Box(dims=(27, 1, 40)))
+            boxes.append(palletier.Box(dims=(274, 1, 153)))
         # "Aluminium Steckzaunpfosten, silber"
         for _ in range(9):  # 9
-            boxes.append(palletier.Box(dims=(6, 1, 6)))
+            boxes.append(palletier.Box(dims=(68, 1, 68)))
 
         packer = palletier.Solver(
             pallets=pallets, boxes=boxes, allow_rotation=False)
@@ -36,7 +37,7 @@ class PalletierPacker():
 
         print(len(packer.packed_pallets))
         visualize(packer)
-        packer.print_solution()
+        # packer.print_solution()
 
 
 def visualize(packer):
